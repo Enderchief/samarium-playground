@@ -20,26 +20,31 @@
 
   $: (() => setTheme(theme))();
 
+  function save() {
+    const compressed = compressToEncodedURIComponent(editor.toString());
+    localStorage.setItem('code', compressed);
+    const url = `${origin}?#${compressed}`;
+    navigator.clipboard.writeText(url);
+    window.location.hash = compressed;
+  }
+
   onMount(() => {
     editor = CodeJar(container, highlight);
 
     document.addEventListener('keydown', (e) => {
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault();
-
-        const compressed = compressToEncodedURIComponent(editor.toString());
-        localStorage.setItem('code', compressed);
-        const url = `${origin}?#${compressed}`;
-        navigator.clipboard.writeText(url);
+        save();
       }
     });
 
     const url = new URL(document.URL).hash.slice(1);
-    if (decompressAndSet(url)) return;
+    if (decompressAndSet(url)) return run();
 
     const stored = localStorage.getItem('code');
-    if (!stored) return;
+    if (!stored) return run();
     decompressAndSet(stored);
+    run();
   });
 
   function decompressAndSet(compressed: string) {
@@ -67,24 +72,25 @@
   }
 </script>
 
-<button class="run" on:click={run}>Run Code</button>
-<select name="version" id="version" bind:value={theme}>
-  {#each BUNDLED_THEMES as t}
-    {#if t !== 'css-variables'}
-      <option value={t}>{t}</option>
-    {/if}
-  {/each}
-</select>
-<select name="version" id="version" bind:value={version}>
-  {#each versions as v}
-    <option value={v}>{v}</option>
-  {/each}
-</select>
+<div class="options">
+  <button class="run" on:click={run}>Run Code</button>
+  <select name="theme" id="theme" bind:value={theme}>
+    {#each BUNDLED_THEMES as t}
+      {#if t !== 'css-variables'}
+        <option value={t}>{t}</option>
+      {/if}
+    {/each}
+  </select>
+  <select name="version" id="version" bind:value={version}>
+    {#each versions as v}
+      <option value={v}>{v}</option>
+    {/each}
+  </select>
+  <button on:click={save}>Save & Copy URL</button>
+</div>
 <div class="container">
-  <div id="repl" class="editor" bind:this={container}>
-    {`=> * {\n\t"ball"!;\n}`}
-  </div>
-  <pre id="output">{@html output}</pre>
+  <div id="repl" class="editor" bind:this={container}>"ball"!;</div>
+  <div id="output">{@html output}</div>
 </div>
 
 <style>
@@ -95,18 +101,23 @@
 
   .container {
     display: grid;
-    grid-template-columns: repeat(2, calc((100% - 1rem) / 2));
+    grid-template-columns: 1fr 1fr;
     gap: 1rem;
+    /* word-wrap: break-word; */
+    overflow-wrap: break-word;
+  }
+
+  @media (max-width: 800px) {
+    .container {
+      grid-template-columns: 1fr;
+    }
   }
 
   :global(.shiki) {
     height: calc(100% - 20px);
     margin: 0;
-    padding: 10px;
-  }
-
-  #output {
-    padding: 10px;
+    padding: 20px;
+    overflow: scroll;
   }
 
   .editor,
@@ -126,5 +137,16 @@
     overflow: scroll;
 
     min-height: 30rem;
+  }
+
+  .options {
+    padding: 0.25rem;
+  }
+
+  select,
+  button {
+    border: 1px solid rgb(196, 194, 194);
+    padding: 0.4rem;
+    border-radius: 6px;
   }
 </style>
