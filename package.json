@@ -10,6 +10,11 @@
 		"astro": "astro"
 	},
 	"dependencies": {
-		"astro": "^2.0.12"
+		"@astrojs/svelte": "^2.0.2",
+		"astro": "^2.0.12",
+		"codejar": "^3.7.0",
+		"lz-string": "^1.5.0",
+		"shiki": "^0.14.1",
+		"svelte": "^3.54.0"
 	}
 }
